@@ -9,6 +9,6 @@ vaultAuthMethod: ldap
 cookieEncryptionKey: Xoo6eiquai3oow2uBaejai8itah8eeMa
 cookieName: sso
 headerName: SSO
-appPublicURL: http://127.0.0.1:8080
+publicURL: http://127.0.0.1:8080
 upstreamURL: https://ya.ru
 ```

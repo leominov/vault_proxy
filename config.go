@@ -14,7 +14,7 @@ type Config struct {
 	CookieEncryptionKey string `yaml:"cookieEncryptionKey"`
 	CookieName          string `yaml:"cookieName"`
 	HeaderName          string `yaml:"headerName"`
-	AppPublicURL        string `yaml:"appPublicURL"`
+	PublicURL           string `yaml:"publicURL"`
 	UpstreamURL         string `yaml:"upstreamURL"`
 }
 

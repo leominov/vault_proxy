@@ -24,9 +24,9 @@ type State struct {
 }
 
 func New(c *Config) (*SSO, error) {
-	publicURL, err := url.Parse(c.AppPublicURL)
+	publicURL, err := url.Parse(c.PublicURL)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to parse AppPublicURL. %v", err)
+		return nil, fmt.Errorf("Unable to parse PublicURL. %v", err)
 	}
 	upstreamURL, err := url.Parse(c.UpstreamURL)
 	if err != nil {
