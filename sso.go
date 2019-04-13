@@ -72,6 +72,16 @@ func (s *SSO) handleLogin(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, fmt.Sprintf("Failed to login. %v", err), http.StatusBadRequest)
 		return
 	}
+	var allowed bool
+	for _, policy := range secret.Auth.Policies {
+		if policy == s.c.VaultPolicyName {
+			allowed = true
+		}
+	}
+	if !allowed {
+		http.Error(w, "Access forbidden.", http.StatusForbidden)
+		return
+	}
 	userState := &State{
 		Token: secret.Auth.ClientToken,
 	}
