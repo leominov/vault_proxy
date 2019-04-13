@@ -45,20 +45,29 @@ func New(c *Config) (*SSO, error) {
 
 func (s *SSO) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	mux := http.NewServeMux()
+	fs := http.FileServer(http.Dir("static"))
+	mux.Handle("/sso/", http.StripPrefix("/sso/", fs))
+
 	mux.HandleFunc("/sso/login", s.handleLogin)
 	mux.HandleFunc("/sso/logout", s.handleLogout)
 	mux.HandleFunc("/", s.handleRequest)
+
 	mux.ServeHTTP(w, r)
 }
 
 func (s *SSO) handleLogin(w http.ResponseWriter, req *http.Request) {
-	user, pass, ok := req.BasicAuth()
-	if !ok {
-		w.Header().Set("WWW-Authenticate", fmt.Sprintf(`Basic realm="%s"`, s.publicURL.Hostname()))
-		http.Error(w, "Unauthorised.", http.StatusUnauthorized)
+	err := req.ParseForm()
+	if err != nil {
+		http.Error(w, "Failed to parse form.", http.StatusBadRequest)
 		return
 	}
-	secret, err := Auth(s.c.VaultAddr, s.c.VaultAuthMethod, user, pass)
+	login := req.Form.Get("login")
+	pass := req.Form.Get("password")
+	if len(login) == 0 || len(pass) == 0 {
+		http.Error(w, "Login and password must be specified.", http.StatusBadRequest)
+		return
+	}
+	secret, err := Auth(s.c.VaultAddr, s.c.VaultAuthMethod, login, pass)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to login. %v", err), http.StatusBadRequest)
 		return
@@ -124,7 +133,7 @@ func (s *SSO) handleRequest(w http.ResponseWriter, r *http.Request) {
 		s.proxy.ServeHTTP(w, r)
 		return
 	}
-	http.Redirect(w, r, "/sso/login", http.StatusFound)
+	http.Redirect(w, r, "/sso/login.html", http.StatusFound)
 }
 
 func (s *SSO) stateFromRequest(req *http.Request) (*State, error) {
