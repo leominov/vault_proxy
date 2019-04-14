@@ -7,10 +7,13 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
+	"log"
 	"net/http"
 	"net/http/httputil"
 	"strings"
 	"time"
+
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -32,6 +35,7 @@ var (
 
 type SSO struct {
 	c     *Config
+	log   *logrus.Logger
 	proxy *httputil.ReverseProxy
 }
 
@@ -41,11 +45,14 @@ type State struct {
 	Policies []string  `json:"policies"`
 }
 
-func New(c *Config) (*SSO, error) {
+func New(c *Config, l *logrus.Logger) (*SSO, error) {
 	proxy := httputil.NewSingleHostReverseProxy(c.upstreamURL)
+	entry := logrus.NewEntry(l)
+	proxy.ErrorLog = log.New(entry.WriterLevel(logrus.ErrorLevel), "", 0)
 	proxy.Transport = http.DefaultTransport
 	s := &SSO{
 		c:     c,
+		log:   l,
 		proxy: proxy,
 	}
 	return s, nil
@@ -138,6 +145,7 @@ func (s *SSO) handlePostLogin(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, fmt.Sprintf("Failed to login. %v", err), http.StatusBadRequest)
 		return
 	}
+	s.log.WithField("rid", secret.RequestID).Debugf("Authorized: %v", secret.Auth.Metadata)
 	cookie, err := s.newCookieFromSecret(secret)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -181,6 +189,7 @@ func (s *SSO) showForbiddenError(w http.ResponseWriter, r *http.Request, meta ma
 	default:
 		t, err := template.ParseFiles(forbiddenTemplate)
 		if err != nil {
+			s.log.Errorf("Failed to parse html template. %v", err)
 			http.Error(w, fmt.Sprintf("Failed to parse html template. %v", err), http.StatusInternalServerError)
 			return
 		}
@@ -207,6 +216,7 @@ func (s *SSO) handleRequest(w http.ResponseWriter, r *http.Request) {
 			"path":     r.URL.Path,
 			"policies": strings.Join(requiredPolicies, ", "),
 		}
+		s.log.Errorf("Failed to access %v", data["request"])
 		s.showForbiddenError(w, r, data)
 		return
 	}
