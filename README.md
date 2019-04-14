@@ -22,4 +22,7 @@ accessList:
       - DELETE
     policies:
       - admins-full
+  - path: /
+    policies:
+      - default
 ```
