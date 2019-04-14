@@ -18,11 +18,13 @@ func (s *SSO) ProxyRequest(w http.ResponseWriter, r *http.Request) {
 	}
 	requiredPolicies, ok := s.isAccessAllowed(r.Method, r.URL.Path, state.Policies)
 	if !ok {
-		data := s.c.Meta
-		data["request"] = map[string]string{
-			"method":   r.Method,
-			"path":     r.URL.Path,
-			"policies": strings.Join(requiredPolicies, ", "),
+		data := map[string]interface{}{
+			"meta": s.c.Meta,
+			"request": map[string]string{
+				"method":   r.Method,
+				"path":     r.URL.Path,
+				"policies": strings.Join(requiredPolicies, ", "),
+			},
 		}
 		s.log.Errorf("Failed to access %v", data["request"])
 		s.showForbiddenError(w, r, data)

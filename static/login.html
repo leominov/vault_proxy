@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>Login to {{.title}}</title>
+    <title>Login to {{.meta.title}}</title>
     <meta name="author" content="Lev Aminov">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
     <style>
@@ -53,11 +53,11 @@
     </style>
   </head>
   <body class="text-center">
-    <form class="form-login" method="POST" action="/sso/login">
-      <h1 class="h3 mb-3 font-weight-normal">Please login to {{.title}}</h1>
-      {{if .description}}
+    <form class="form-login" method="POST" action="{{.vars.login}}">
+      <h1 class="h3 mb-3 font-weight-normal">Please login to {{.meta.title}}</h1>
+      {{if .meta.description}}
       <div class="alert alert-info text-left">
-        {{.description | html}}
+        {{.meta.description | html}}
       </div>
       {{end}}
       <label for="inputLogin" class="sr-only">Login</label>

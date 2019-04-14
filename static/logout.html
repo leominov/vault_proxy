@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>Logout from {{.title}}</title>
+    <title>Logout from {{.meta.title}}</title>
     <meta name="author" content="Lev Aminov">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
     <style>
@@ -19,7 +19,7 @@
       <div class="container">
         <h1 class="mt-5">Logout</h1>
         <p class="lead">You are now logged out.</p>
-        <p>Didn't mean to log out? <a href="/sso/login">Log in again</a>.</p>
+        <p>Didn't mean to log out? <a href="{{.vars.login}}">Log in again</a>.</p>
       </div>
     </main>
 </body>

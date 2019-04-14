@@ -21,8 +21,8 @@ const (
 	logoutTemplate    = "static/logout.html"
 	forbiddenTemplate = "static/forbidden.html"
 
-	loginRoute  = "/sso/login"
-	logoutRoute = "/sso/logout"
+	loginRoute  = "/_/login"
+	logoutRoute = "/_/logout"
 )
 
 var (
@@ -60,9 +60,13 @@ func New(c *Config, l *logrus.Logger) (*SSO, error) {
 
 func (s *SSO) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	mux := http.NewServeMux()
+	fs := http.FileServer(http.Dir("static"))
+
 	mux.HandleFunc(loginRoute, s.LoginRequest)
 	mux.HandleFunc(logoutRoute, s.LogoutRequest)
+	mux.Handle("/_/", http.StripPrefix("/_/", fs))
 	mux.HandleFunc("/", s.ProxyRequest)
+
 	mux.ServeHTTP(w, r)
 }
 

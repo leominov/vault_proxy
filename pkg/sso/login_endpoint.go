@@ -24,7 +24,13 @@ func (s *SSO) showFormLogin(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, fmt.Sprintf("Failed to parse html template. %v", err), http.StatusInternalServerError)
 		return
 	}
-	t.Funcs(templateFuncs).Execute(w, s.c.Meta)
+	data := map[string]interface{}{
+		"meta": s.c.Meta,
+		"vars": map[string]string{
+			"login": loginRoute,
+		},
+	}
+	t.Funcs(templateFuncs).Execute(w, data)
 }
 
 func (s *SSO) processFormLogin(w http.ResponseWriter, req *http.Request) {
