@@ -92,7 +92,7 @@ func (s *SSO) isAllowedToLogin(secret *Secret) (bool, error) {
 func (s *SSO) newCookieFromSecret(secret *Secret) (*http.Cookie, error) {
 	userState := &State{
 		Token: secret.Auth.ClientToken,
-		TTL:   time.Now().Add(time.Duration(secret.Auth.LeaseDuration) * time.Second),
+		TTL:   time.Now().Add(secret.TTL),
 	}
 	b, err := json.Marshal(userState)
 	if err != nil {
@@ -109,7 +109,7 @@ func (s *SSO) newCookieFromSecret(secret *Secret) (*http.Cookie, error) {
 		Value:   encodedCookie,
 		Path:    "/",
 		Domain:  s.c.publicURL.Hostname(),
-		Expires: time.Now().Add(time.Duration(secret.Auth.LeaseDuration) * time.Second),
+		Expires: userState.TTL,
 	}
 	return cookie, nil
 }
