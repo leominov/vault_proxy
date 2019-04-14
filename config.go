@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/url"
+	"regexp"
 	"time"
 
 	"gopkg.in/yaml.v2"
@@ -18,14 +19,21 @@ type Config struct {
 	PublicURLRaw        string            `yaml:"publicURL"`
 	UpstreamURLRaw      string            `yaml:"upstreamURL"`
 	Meta                map[string]string `yaml:"meta"`
+	AccessList          []*AccesItem      `yaml:"accessList"`
+	routeRegExpMap      map[string]*regexp.Regexp
 	publicURL           *url.URL
 	upstreamURL         *url.URL
+}
+
+type AccesItem struct {
+	Path   string `yaml:"path"`
+	Policy string `yaml:"policy"`
+	re     *regexp.Regexp
 }
 
 type VaultConfig struct {
 	Addr       string `yaml:"addr"`
 	AuthMethod string `yaml:"authMethod"`
-	PolicyName string `yaml:"policyName"`
 	TTLRaw     string `yaml:"ttl"`
 	ttl        time.Duration
 }
@@ -60,6 +68,14 @@ func (c *Config) parse() error {
 		return fmt.Errorf("Unable to parse UpstreamURL. %v", err)
 	}
 	c.upstreamURL = upstreamURL
+	c.routeRegExpMap = make(map[string]*regexp.Regexp, len(c.AccessList))
+	for _, item := range c.AccessList {
+		re, err := regexp.Compile(item.Path)
+		if err != nil {
+			return fmt.Errorf("Unable to parse '%s' as regular expression. %v", item.Path, err)
+		}
+		item.re = re
+	}
 	if err := c.VaultConfig.parse(); err != nil {
 		return err
 	}

@@ -13,8 +13,9 @@ import (
 )
 
 const (
-	loginTemplate  = "static/login.html"
-	logoutTemplate = "static/logout.html"
+	loginTemplate     = "static/login.html"
+	logoutTemplate    = "static/logout.html"
+	forbiddenTemplate = "static/forbidden.html"
 
 	loginRoute  = "/sso/login"
 	logoutRoute = "/sso/logout"
@@ -34,8 +35,9 @@ type SSO struct {
 }
 
 type State struct {
-	TTL   time.Time `json:"ttl"`
-	Token string    `json:"token"`
+	TTL      time.Time `json:"ttl"`
+	Token    string    `json:"token"`
+	Policies []string  `json:"policies"`
 }
 
 func New(c *Config) (*SSO, error) {
@@ -77,22 +79,29 @@ func (s *SSO) handleGetLogin(w http.ResponseWriter, req *http.Request) {
 	t.Funcs(templateFuncs).Execute(w, s.c.Meta)
 }
 
-func (s *SSO) isAllowedToLogin(secret *Secret) (bool, error) {
-	if len(s.c.VaultConfig.PolicyName) == 0 {
-		return true, nil
+func (s *SSO) isAccessAllowed(policies []string, path string) bool {
+	if len(s.c.AccessList) == 0 {
+		return true
 	}
-	for _, policy := range secret.Auth.Policies {
-		if policy == s.c.VaultConfig.PolicyName {
-			return true, nil
+	for _, item := range s.c.AccessList {
+		if item.re.MatchString(path) {
+			for _, p := range policies {
+				if p == item.Policy {
+					return true
+				}
+			}
+			return false
 		}
 	}
-	return false, errors.New("Access forbidden")
+
+	return true
 }
 
 func (s *SSO) newCookieFromSecret(secret *Secret) (*http.Cookie, error) {
 	userState := &State{
-		Token: secret.Auth.ClientToken,
-		TTL:   time.Now().Add(secret.TTL),
+		Policies: secret.Auth.Policies,
+		Token:    secret.Auth.ClientToken,
+		TTL:      time.Now().Add(secret.TTL),
 	}
 	b, err := json.Marshal(userState)
 	if err != nil {
@@ -118,11 +127,6 @@ func (s *SSO) handlePostLogin(w http.ResponseWriter, req *http.Request) {
 	secret, err := Auth(s.c.VaultConfig, req)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to login. %v", err), http.StatusBadRequest)
-		return
-	}
-	ok, err := s.isAllowedToLogin(secret)
-	if !ok {
-		http.Error(w, err.Error(), http.StatusForbidden)
 		return
 	}
 	cookie, err := s.newCookieFromSecret(secret)
@@ -163,6 +167,16 @@ func (s *SSO) handleRequest(w http.ResponseWriter, r *http.Request) {
 	}
 	if state == nil {
 		http.Redirect(w, r, loginRoute, http.StatusFound)
+		return
+	}
+	ok := s.isAccessAllowed(state.Policies, r.URL.Path)
+	if !ok {
+		t, err := template.ParseFiles(forbiddenTemplate)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Failed to parse html template. %v", err), http.StatusInternalServerError)
+			return
+		}
+		t.Funcs(templateFuncs).Execute(w, s.c.Meta)
 		return
 	}
 	r.Header.Add(s.c.HeaderName, string(b))
