@@ -20,14 +20,14 @@
         <div class="mt-5 alert alert-danger" role="alert">
           <h4 class="alert-heading">Access forbidden</h4>
           <p>You do not have permission to access <kbd>{{.request.method}} {{.request.path}}</kbd></p>
-          {{if .request.policies}}
+          {{if .accessItem.Policies}}
           <hr>
-            {{ if eq (len .request.policies) 1 }}
-            <p class="mb-0">To access this page you must have <b>{{ index .request.policies 0 }}</b> policy.</p>
+            {{ if eq (len .accessItem.Policies) 1 }}
+            <p class="mb-0">To access this page you must have <b>{{ index .accessItem.Policies 0 }}</b> policy.</p>
             {{else}}
               <p class="mb-0">To access this page you must have one of this policies:</p>
               <ul class="mb-0">
-                {{range .request.policies}}
+                {{range .accessItem.Policies}}
                 <li>{{.}}</li>
                 {{end}}
               </ul>

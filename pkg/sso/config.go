@@ -26,6 +26,7 @@ type Config struct {
 }
 
 type AccesItem struct {
+	Name      string   `yaml:"name"`
 	Path      string   `yaml:"path"`
 	Policies  []string `yaml:"policies"`
 	Methods   []string `yaml:"methods"`

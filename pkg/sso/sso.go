@@ -70,7 +70,7 @@ func (s *SSO) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	mux.ServeHTTP(w, r)
 }
 
-func (s *SSO) isAccessAllowed(method, path string, policies []string) ([]string, bool) {
+func (s *SSO) isAccessAllowed(method, path string, policies []string) (*AccesItem, bool) {
 	if len(s.c.AccessList) == 0 {
 		return nil, true
 	}
@@ -90,7 +90,7 @@ func (s *SSO) isAccessAllowed(method, path string, policies []string) ([]string,
 				return nil, true
 			}
 		}
-		return item.Policies, false
+		return item, false
 	}
 
 	return nil, true
@@ -128,8 +128,9 @@ func (s *SSO) showForbiddenError(w http.ResponseWriter, r *http.Request, meta ma
 	case "application/json":
 		encoder := json.NewEncoder(w)
 		message := map[string]interface{}{
-			"request": meta["request"],
-			"error":   "Access forbidden",
+			"request":    meta["request"],
+			"error":      "Access forbidden",
+			"error_code": http.StatusForbidden,
 		}
 		w.WriteHeader(http.StatusForbidden)
 		encoder.Encode(message)
