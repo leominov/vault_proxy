@@ -10,7 +10,7 @@ import (
 
 var (
 	configFile    = flag.String("config", "config.yaml", "Path to configuration file")
-	listenAddress = flag.String("listen-address", ":8080", "Address to server requests")
+	listenAddress = flag.String("listen-address", "127.0.0.1:8080", "Address to server requests")
 	logLevel      = flag.String("log-level", "debug", "Logging level")
 )
 

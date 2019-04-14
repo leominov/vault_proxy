@@ -12,6 +12,7 @@ import (
 type VaultConfig struct {
 	Addr       string `yaml:"addr"`
 	AuthMethod string `yaml:"authMethod"`
+	MaxRetries int    `yaml:"maxRetries"`
 	TTLRaw     string `yaml:"ttl"`
 	ttl        time.Duration
 }
@@ -27,7 +28,8 @@ func Auth(c *VaultConfig, r *http.Request) (*Secret, error) {
 		return nil, err
 	}
 	config := api.Config{
-		Address: c.Addr,
+		Address:    c.Addr,
+		MaxRetries: c.MaxRetries,
 	}
 	client, err := api.NewClient(&config)
 	if err != nil {
