@@ -21,7 +21,10 @@ meta:
 vaultConfig:
   addr: https://vault.local
   authMethod: ldap
-  ttl: token # based on token lifetime
+  # TTL as `token` will be based on token lifetime,
+  # it might be specified in time.Duration format.
+  # ref: https://golang.org/pkg/time/#ParseDuration
+  ttl: token
 cookieEncryptionKey: Xoo6eiquai3oow2uBaejai8itah8eeMa
 cookieName: sso
 headerName: SSO
