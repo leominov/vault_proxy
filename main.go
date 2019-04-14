@@ -13,6 +13,7 @@ var (
 
 func main() {
 	flag.Parse()
+	log.Println("Starting vault-auth-proxy...")
 	c, err := LoadConfig(*configFile)
 	if err != nil {
 		log.Fatal(err)
@@ -25,6 +26,6 @@ func main() {
 		Addr:    *listenAddress,
 		Handler: sso,
 	}
-	log.Printf("HTTP service listening on %s", server.Addr)
+	log.Printf("Serving incoming requests on %s address", server.Addr)
 	log.Fatal(server.ListenAndServe())
 }
