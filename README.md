@@ -4,7 +4,6 @@
 
 ```yaml
 ---
----
 meta:
   title: Portal
 vaultConfig:
