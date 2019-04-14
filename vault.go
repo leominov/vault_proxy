@@ -3,17 +3,17 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/hashicorp/vault/api"
 )
 
-type VaultConfig struct {
-	Addr       string `yaml:"addr"`
-	AuthMethod string `yaml:"authMethod"`
-	PolicyName string `yaml:"policyName"`
+type Secret struct {
+	*api.Secret
+	TTL time.Duration
 }
 
-func Auth(c *VaultConfig, r *http.Request) (*api.Secret, error) {
+func Auth(c *VaultConfig, r *http.Request) (*Secret, error) {
 	login, password, err := parseFormRequest(r)
 	if err != nil {
 		return nil, err
@@ -33,5 +33,9 @@ func Auth(c *VaultConfig, r *http.Request) (*api.Secret, error) {
 	if err != nil {
 		return nil, err
 	}
-	return secret, nil
+	ttl := time.Duration(secret.Auth.LeaseDuration) * time.Second
+	if c.TTLRaw != "token" {
+		ttl = c.ttl
+	}
+	return &Secret{secret, ttl}, nil
 }

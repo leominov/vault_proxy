@@ -1,12 +1,19 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"net/http"
 )
 
+var (
+	configFile    = flag.String("config", "config.yaml", "Path to configuration file")
+	listenAddress = flag.String("listen-address", ":8080", "Address to server requests")
+)
+
 func main() {
-	c, err := LoadConfig("config.yaml")
+	flag.Parse()
+	c, err := LoadConfig(*configFile)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -14,10 +21,10 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	s := &http.Server{
-		Addr:    ":8080",
+	server := &http.Server{
+		Addr:    *listenAddress,
 		Handler: sso,
 	}
-	log.Printf("HTTP service listening on %s", s.Addr)
-	log.Fatal(s.ListenAndServe())
+	log.Printf("HTTP service listening on %s", server.Addr)
+	log.Fatal(server.ListenAndServe())
 }

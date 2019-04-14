@@ -9,8 +9,15 @@ import (
 	"html/template"
 	"net/http"
 	"net/http/httputil"
-	"net/url"
 	"time"
+)
+
+const (
+	loginTemplate  = "static/login.html"
+	logoutTemplate = "static/logout.html"
+
+	loginRoute  = "/sso/login"
+	logoutRoute = "/sso/logout"
 )
 
 var (
@@ -22,10 +29,8 @@ var (
 )
 
 type SSO struct {
-	c           *Config
-	publicURL   *url.URL
-	upstreamURL *url.URL
-	proxy       *httputil.ReverseProxy
+	c     *Config
+	proxy *httputil.ReverseProxy
 }
 
 type State struct {
@@ -34,34 +39,20 @@ type State struct {
 }
 
 func New(c *Config) (*SSO, error) {
-	publicURL, err := url.Parse(c.PublicURL)
-	if err != nil {
-		return nil, fmt.Errorf("Unable to parse PublicURL. %v", err)
-	}
-	upstreamURL, err := url.Parse(c.UpstreamURL)
-	if err != nil {
-		return nil, fmt.Errorf("Unable to parse UpstreamURL. %v", err)
-	}
-	proxy := httputil.NewSingleHostReverseProxy(upstreamURL)
+	proxy := httputil.NewSingleHostReverseProxy(c.upstreamURL)
 	proxy.Transport = http.DefaultTransport
 	s := &SSO{
-		c:           c,
-		publicURL:   publicURL,
-		upstreamURL: upstreamURL,
-		proxy:       proxy,
+		c:     c,
+		proxy: proxy,
 	}
 	return s, nil
 }
 
 func (s *SSO) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	mux := http.NewServeMux()
-	fs := http.FileServer(http.Dir("static"))
-	mux.Handle("/sso/", http.StripPrefix("/sso/", fs))
-
-	mux.HandleFunc("/sso/login", s.handleLogin)
-	mux.HandleFunc("/sso/logout", s.handleLogout)
+	mux.HandleFunc(loginRoute, s.handleLogin)
+	mux.HandleFunc(logoutRoute, s.handleLogout)
 	mux.HandleFunc("/", s.handleRequest)
-
 	mux.ServeHTTP(w, r)
 }
 
@@ -78,12 +69,49 @@ func (s *SSO) handleLogin(w http.ResponseWriter, req *http.Request) {
 }
 
 func (s *SSO) handleGetLogin(w http.ResponseWriter, req *http.Request) {
-	t, err := template.ParseFiles("static/login.html")
+	t, err := template.ParseFiles(loginTemplate)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to parse html template. %v", err), http.StatusInternalServerError)
 		return
 	}
 	t.Funcs(templateFuncs).Execute(w, s.c.Meta)
+}
+
+func (s *SSO) isAllowedToLogin(secret *Secret) (bool, error) {
+	if len(s.c.VaultConfig.PolicyName) == 0 {
+		return true, nil
+	}
+	for _, policy := range secret.Auth.Policies {
+		if policy == s.c.VaultConfig.PolicyName {
+			return true, nil
+		}
+	}
+	return false, errors.New("Access forbidden")
+}
+
+func (s *SSO) newCookieFromSecret(secret *Secret) (*http.Cookie, error) {
+	userState := &State{
+		Token: secret.Auth.ClientToken,
+		TTL:   time.Now().Add(time.Duration(secret.Auth.LeaseDuration) * time.Second),
+	}
+	b, err := json.Marshal(userState)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to marshal user state. %v", err)
+	}
+	encryptedCookie, nonce, err := encrypt(b, []byte(s.c.CookieEncryptionKey))
+	if err != nil {
+		return nil, errors.New("Failed to encrypt user state")
+	}
+	encryptedCookie = append(nonce, encryptedCookie...)
+	encodedCookie := base64.StdEncoding.EncodeToString(encryptedCookie)
+	cookie := &http.Cookie{
+		Name:    s.c.CookieName,
+		Value:   encodedCookie,
+		Path:    "/",
+		Domain:  s.c.publicURL.Hostname(),
+		Expires: time.Now().Add(time.Duration(secret.Auth.LeaseDuration) * time.Second),
+	}
+	return cookie, nil
 }
 
 func (s *SSO) handlePostLogin(w http.ResponseWriter, req *http.Request) {
@@ -92,45 +120,23 @@ func (s *SSO) handlePostLogin(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, fmt.Sprintf("Failed to login. %v", err), http.StatusBadRequest)
 		return
 	}
-	var allowed bool
-	for _, policy := range secret.Auth.Policies {
-		if policy == s.c.VaultConfig.PolicyName {
-			allowed = true
-		}
-	}
-	if !allowed {
-		http.Error(w, "Access forbidden.", http.StatusForbidden)
+	ok, err := s.isAllowedToLogin(secret)
+	if !ok {
+		http.Error(w, err.Error(), http.StatusForbidden)
 		return
 	}
-	userState := &State{
-		Token: secret.Auth.ClientToken,
-		TTL:   time.Now().Add(time.Duration(secret.Auth.LeaseDuration) * time.Second),
-	}
-	b, err := json.Marshal(userState)
+	cookie, err := s.newCookieFromSecret(secret)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	encryptedCookie, nonce, err := encrypt(b, []byte(s.c.CookieEncryptionKey))
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	encryptedCookie = append(nonce, encryptedCookie...)
-	encodedCookie := base64.StdEncoding.EncodeToString(encryptedCookie)
-	http.SetCookie(w, &http.Cookie{
-		Name:    s.c.CookieName,
-		Value:   encodedCookie,
-		Path:    "/",
-		Domain:  s.publicURL.Hostname(),
-		Expires: time.Now().Add(time.Duration(secret.Auth.LeaseDuration) * time.Second),
-	})
+	http.SetCookie(w, cookie)
 	http.Redirect(w, req, "/", http.StatusFound)
 }
 
 func (s *SSO) handleLogout(w http.ResponseWriter, req *http.Request) {
 	s.setLogoutCookie(w)
-	t, err := template.ParseFiles("static/logout.html")
+	t, err := template.ParseFiles(logoutTemplate)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to parse html template. %v", err), http.StatusInternalServerError)
 		return
@@ -143,7 +149,7 @@ func (s *SSO) setLogoutCookie(w http.ResponseWriter) {
 		Name:    s.c.CookieName,
 		Value:   "",
 		Path:    "/",
-		Domain:  s.publicURL.Hostname(),
+		Domain:  s.c.publicURL.Hostname(),
 		Expires: time.Date(1970, time.January, 1, 1, 0, 0, 0, time.UTC),
 	})
 }
@@ -155,16 +161,16 @@ func (s *SSO) handleRequest(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	if state != nil {
-		r.Header.Add(s.c.HeaderName, string(b))
-		r.URL.Scheme = s.upstreamURL.Scheme
-		r.URL.Host = s.upstreamURL.Host
-		r.Host = s.upstreamURL.Host
-		r.Header.Set("X-Forwarded-Host", r.Header.Get("Host"))
-		s.proxy.ServeHTTP(w, r)
+	if state == nil {
+		http.Redirect(w, r, loginRoute, http.StatusFound)
 		return
 	}
-	http.Redirect(w, r, "/sso/login", http.StatusFound)
+	r.Header.Add(s.c.HeaderName, string(b))
+	r.URL.Scheme = s.c.upstreamURL.Scheme
+	r.URL.Host = s.c.upstreamURL.Host
+	r.Host = s.c.upstreamURL.Host
+	r.Header.Set("X-Forwarded-Host", r.Header.Get("Host"))
+	s.proxy.ServeHTTP(w, r)
 }
 
 func (s *SSO) stateFromRequest(req *http.Request) (*State, []byte, error) {
