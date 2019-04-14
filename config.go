@@ -26,9 +26,10 @@ type Config struct {
 }
 
 type AccesItem struct {
-	Path   string `yaml:"path"`
-	Policy string `yaml:"policy"`
-	re     *regexp.Regexp
+	Path      string   `yaml:"path"`
+	Policies  []string `yaml:"policies"`
+	policyMap map[string]bool
+	re        *regexp.Regexp
 }
 
 type VaultConfig struct {
@@ -70,6 +71,10 @@ func (c *Config) parse() error {
 	c.upstreamURL = upstreamURL
 	c.routeRegExpMap = make(map[string]*regexp.Regexp, len(c.AccessList))
 	for _, item := range c.AccessList {
+		item.policyMap = make(map[string]bool, len(item.Policies))
+		for _, policy := range item.Policies {
+			item.policyMap[policy] = true
+		}
 		re, err := regexp.Compile(item.Path)
 		if err != nil {
 			return fmt.Errorf("Unable to parse '%s' as regular expression. %v", item.Path, err)

@@ -9,6 +9,7 @@ import (
 	"html/template"
 	"net/http"
 	"net/http/httputil"
+	"strings"
 	"time"
 )
 
@@ -79,22 +80,24 @@ func (s *SSO) handleGetLogin(w http.ResponseWriter, req *http.Request) {
 	t.Funcs(templateFuncs).Execute(w, s.c.Meta)
 }
 
-func (s *SSO) isAccessAllowed(policies []string, path string) bool {
+func (s *SSO) isAccessAllowed(policies []string, path string) ([]string, bool) {
 	if len(s.c.AccessList) == 0 {
-		return true
+		return nil, true
 	}
 	for _, item := range s.c.AccessList {
-		if item.re.MatchString(path) {
-			for _, p := range policies {
-				if p == item.Policy {
-					return true
-				}
-			}
-			return false
+		if !item.re.MatchString(path) {
+			continue
 		}
+		for _, p := range policies {
+			_, ok := item.policyMap[p]
+			if ok {
+				return nil, true
+			}
+		}
+		return item.Policies, false
 	}
 
-	return true
+	return nil, true
 }
 
 func (s *SSO) newCookieFromSecret(secret *Secret) (*http.Cookie, error) {
@@ -169,13 +172,16 @@ func (s *SSO) handleRequest(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, loginRoute, http.StatusFound)
 		return
 	}
-	ok := s.isAccessAllowed(state.Policies, r.URL.Path)
+	requiredPolicies, ok := s.isAccessAllowed(state.Policies, r.URL.Path)
 	if !ok {
 		t, err := template.ParseFiles(forbiddenTemplate)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Failed to parse html template. %v", err), http.StatusInternalServerError)
 			return
 		}
+		data := s.c.Meta
+		data["page"] = r.URL.Path
+		data["policies"] = strings.Join(requiredPolicies, ", ")
 		t.Funcs(templateFuncs).Execute(w, s.c.Meta)
 		return
 	}
