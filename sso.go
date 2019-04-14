@@ -86,18 +86,7 @@ func (s *SSO) handleGetLogin(w http.ResponseWriter, req *http.Request) {
 }
 
 func (s *SSO) handlePostLogin(w http.ResponseWriter, req *http.Request) {
-	err := req.ParseForm()
-	if err != nil {
-		http.Error(w, "Failed to parse form.", http.StatusBadRequest)
-		return
-	}
-	login := req.Form.Get("login")
-	pass := req.Form.Get("password")
-	if len(login) == 0 || len(pass) == 0 {
-		http.Error(w, "Login and password must be specified.", http.StatusBadRequest)
-		return
-	}
-	secret, err := Auth(s.c.VaultConfig, login, pass)
+	secret, err := Auth(s.c.VaultConfig, req)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to login. %v", err), http.StatusBadRequest)
 		return

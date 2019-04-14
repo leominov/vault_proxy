@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"net/http"
 
 	"github.com/hashicorp/vault/api"
 )
@@ -12,7 +13,11 @@ type VaultConfig struct {
 	PolicyName string `yaml:"policyName"`
 }
 
-func Auth(c *VaultConfig, login, password string) (*api.Secret, error) {
+func Auth(c *VaultConfig, r *http.Request) (*api.Secret, error) {
+	login, password, err := parseFormRequest(r)
+	if err != nil {
+		return nil, err
+	}
 	config := api.Config{
 		Address: c.Addr,
 	}
