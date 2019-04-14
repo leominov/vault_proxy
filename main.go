@@ -3,8 +3,6 @@ package main
 import (
 	"log"
 	"net/http"
-
-	"github.com/Sirupsen/logrus"
 )
 
 func main() {
@@ -20,6 +18,6 @@ func main() {
 		Addr:    ":8080",
 		Handler: sso,
 	}
-	logrus.Infof("HTTP service listening on %s", s.Addr)
-	logrus.Panic(s.ListenAndServe())
+	log.Printf("HTTP service listening on %s", s.Addr)
+	log.Fatal(s.ListenAndServe())
 }

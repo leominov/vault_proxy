@@ -29,7 +29,8 @@ type SSO struct {
 }
 
 type State struct {
-	Token string `json:"token"`
+	TTL   time.Time `json:"ttl"`
+	Token string    `json:"token"`
 }
 
 func New(c *Config) (*SSO, error) {
@@ -103,6 +104,7 @@ func (s *SSO) handlePostLogin(w http.ResponseWriter, req *http.Request) {
 	}
 	userState := &State{
 		Token: secret.Auth.ClientToken,
+		TTL:   time.Now().Add(time.Duration(secret.Auth.LeaseDuration) * time.Second),
 	}
 	b, err := json.Marshal(userState)
 	if err != nil {
@@ -147,18 +149,13 @@ func (s *SSO) setLogoutCookie(w http.ResponseWriter) {
 }
 
 func (s *SSO) handleRequest(w http.ResponseWriter, r *http.Request) {
-	state, err := s.stateFromRequest(r)
+	state, b, err := s.stateFromRequest(r)
 	if err != nil && err != http.ErrNoCookie {
 		s.setLogoutCookie(w)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	if state != nil {
-		b, err := json.Marshal(state)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
 		r.Header.Add(s.c.HeaderName, string(b))
 		r.URL.Scheme = s.upstreamURL.Scheme
 		r.URL.Host = s.upstreamURL.Host
@@ -170,35 +167,35 @@ func (s *SSO) handleRequest(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/sso/login", http.StatusFound)
 }
 
-func (s *SSO) stateFromRequest(req *http.Request) (*State, error) {
+func (s *SSO) stateFromRequest(req *http.Request) (*State, []byte, error) {
 	cookie, err := req.Cookie(s.c.CookieName)
 	if err == http.ErrNoCookie {
-		return nil, http.ErrNoCookie
+		return nil, nil, http.ErrNoCookie
 	}
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	decodedCookie, err := base64.StdEncoding.DecodeString(cookie.Value)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	encryptedCookie := []byte(decodedCookie)
 	nonce := encryptedCookie[:12]
 	encryptedCookie = encryptedCookie[12:]
 	if len(nonce) != 12 {
-		return nil, errors.New("Nonce must be 12 characters in length")
+		return nil, nil, errors.New("Nonce must be 12 characters in length")
 	}
 	if len(encryptedCookie) == 0 {
-		return nil, errors.New("Encrypted Cookie missing")
+		return nil, nil, errors.New("Encrypted Cookie missing")
 	}
 	b, err := decrypt(encryptedCookie, nonce, []byte(s.c.CookieEncryptionKey))
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	var state *State
 	err = json.NewDecoder(bytes.NewReader(b)).Decode(&state)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return state, nil
+	return state, b, nil
 }
