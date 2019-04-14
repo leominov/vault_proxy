@@ -13,14 +13,14 @@ import (
 )
 
 type Config struct {
-	VaultConfig         *VaultConfig      `yaml:"vaultConfig"`
-	CookieEncryptionKey string            `yaml:"cookieEncryptionKey"`
-	CookieName          string            `yaml:"cookieName"`
-	HeaderName          string            `yaml:"headerName"`
-	PublicURLRaw        string            `yaml:"publicURL"`
-	UpstreamURLRaw      string            `yaml:"upstreamURL"`
-	Meta                map[string]string `yaml:"meta"`
-	AccessList          []*AccesItem      `yaml:"accessList"`
+	VaultConfig         *VaultConfig           `yaml:"vaultConfig"`
+	CookieEncryptionKey string                 `yaml:"cookieEncryptionKey"`
+	CookieName          string                 `yaml:"cookieName"`
+	HeaderName          string                 `yaml:"headerName"`
+	PublicURLRaw        string                 `yaml:"publicURL"`
+	UpstreamURLRaw      string                 `yaml:"upstreamURL"`
+	Meta                map[string]interface{} `yaml:"meta"`
+	AccessList          []*AccesItem           `yaml:"accessList"`
 	routeRegExpMap      map[string]*regexp.Regexp
 	publicURL           *url.URL
 	upstreamURL         *url.URL

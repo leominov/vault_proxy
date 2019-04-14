@@ -167,6 +167,27 @@ func (s *SSO) setLogoutCookie(w http.ResponseWriter) {
 	})
 }
 
+func (s *SSO) showForbiddenError(w http.ResponseWriter, r *http.Request, meta map[string]interface{}) {
+	contentType := strings.ToLower(r.Header.Get("Content-Type"))
+	switch contentType {
+	case "application/json":
+		encoder := json.NewEncoder(w)
+		message := map[string]interface{}{
+			"request": meta["request"],
+			"error":   "Access forbidden",
+		}
+		w.WriteHeader(http.StatusForbidden)
+		encoder.Encode(message)
+	default:
+		t, err := template.ParseFiles(forbiddenTemplate)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Failed to parse html template. %v", err), http.StatusInternalServerError)
+			return
+		}
+		t.Funcs(templateFuncs).Execute(w, meta)
+	}
+}
+
 func (s *SSO) handleRequest(w http.ResponseWriter, r *http.Request) {
 	state, b, err := s.stateFromRequest(r)
 	if err != nil && err != http.ErrNoCookie {
@@ -180,16 +201,13 @@ func (s *SSO) handleRequest(w http.ResponseWriter, r *http.Request) {
 	}
 	requiredPolicies, ok := s.isAccessAllowed(r.Method, r.URL.Path, state.Policies)
 	if !ok {
-		t, err := template.ParseFiles(forbiddenTemplate)
-		if err != nil {
-			http.Error(w, fmt.Sprintf("Failed to parse html template. %v", err), http.StatusInternalServerError)
-			return
-		}
 		data := s.c.Meta
-		data["method"] = r.Method
-		data["page"] = r.URL.Path
-		data["policies"] = strings.Join(requiredPolicies, ", ")
-		t.Funcs(templateFuncs).Execute(w, s.c.Meta)
+		data["request"] = map[string]string{
+			"method":   r.Method,
+			"path":     r.URL.Path,
+			"policies": strings.Join(requiredPolicies, ", "),
+		}
+		s.showForbiddenError(w, r, data)
 		return
 	}
 	r.Header.Add(s.c.HeaderName, string(b))
