@@ -80,13 +80,19 @@ func (s *SSO) handleGetLogin(w http.ResponseWriter, req *http.Request) {
 	t.Funcs(templateFuncs).Execute(w, s.c.Meta)
 }
 
-func (s *SSO) isAccessAllowed(policies []string, path string) ([]string, bool) {
+func (s *SSO) isAccessAllowed(method, path string, policies []string) ([]string, bool) {
 	if len(s.c.AccessList) == 0 {
 		return nil, true
 	}
 	for _, item := range s.c.AccessList {
 		if !item.re.MatchString(path) {
 			continue
+		}
+		if len(item.methodMap) > 0 {
+			_, ok := item.methodMap[method]
+			if !ok {
+				continue
+			}
 		}
 		for _, p := range policies {
 			_, ok := item.policyMap[p]
@@ -172,7 +178,7 @@ func (s *SSO) handleRequest(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, loginRoute, http.StatusFound)
 		return
 	}
-	requiredPolicies, ok := s.isAccessAllowed(state.Policies, r.URL.Path)
+	requiredPolicies, ok := s.isAccessAllowed(r.Method, r.URL.Path, state.Policies)
 	if !ok {
 		t, err := template.ParseFiles(forbiddenTemplate)
 		if err != nil {

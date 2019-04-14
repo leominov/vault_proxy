@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/url"
 	"regexp"
+	"strings"
 	"time"
 
 	"gopkg.in/yaml.v2"
@@ -28,6 +29,8 @@ type Config struct {
 type AccesItem struct {
 	Path      string   `yaml:"path"`
 	Policies  []string `yaml:"policies"`
+	Methods   []string `yaml:"methods"`
+	methodMap map[string]bool
 	policyMap map[string]bool
 	re        *regexp.Regexp
 }
@@ -74,6 +77,10 @@ func (c *Config) parse() error {
 		item.policyMap = make(map[string]bool, len(item.Policies))
 		for _, policy := range item.Policies {
 			item.policyMap[policy] = true
+		}
+		item.methodMap = make(map[string]bool, len(item.Methods))
+		for _, method := range item.Methods {
+			item.methodMap[strings.ToUpper(method)] = true
 		}
 		re, err := regexp.Compile(item.Path)
 		if err != nil {
