@@ -41,7 +41,6 @@ type SSO struct {
 
 type State struct {
 	TTL      time.Time `json:"ttl"`
-	Token    string    `json:"token"`
 	Policies []string  `json:"policies"`
 }
 
@@ -99,7 +98,6 @@ func (s *SSO) isAccessAllowed(method, path string, policies []string) (*AccesIte
 func (s *SSO) newCookieFromSecret(secret *Secret) (*http.Cookie, error) {
 	userState := &State{
 		Policies: secret.Auth.Policies,
-		Token:    secret.Auth.ClientToken,
 		TTL:      time.Now().Add(secret.TTL),
 	}
 	b, err := json.Marshal(userState)
