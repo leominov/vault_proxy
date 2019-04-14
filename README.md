@@ -11,7 +11,7 @@ vaultConfig:
   authMethod: ldap
   ttl: token # 720h
 cookieEncryptionKey: Xoo6eiquai3oow2uBaejai8itah8eeMa
-cookieName: w2e9
+cookieName: sso
 headerName: SSO
 publicURL: http://127.0.0.1:8080
 upstreamURL: http://127.0.0.1:9093
