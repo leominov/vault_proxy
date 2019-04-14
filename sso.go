@@ -60,31 +60,10 @@ func New(c *Config, l *logrus.Logger) (*SSO, error) {
 
 func (s *SSO) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	mux := http.NewServeMux()
-	mux.HandleFunc(loginRoute, s.handleLogin)
-	mux.HandleFunc(logoutRoute, s.handleLogout)
-	mux.HandleFunc("/", s.handleRequest)
+	mux.HandleFunc(loginRoute, s.LoginRequest)
+	mux.HandleFunc(logoutRoute, s.LogoutRequest)
+	mux.HandleFunc("/", s.ProxyRequest)
 	mux.ServeHTTP(w, r)
-}
-
-func (s *SSO) handleLogin(w http.ResponseWriter, req *http.Request) {
-	switch req.Method {
-	case http.MethodPost:
-		s.handlePostLogin(w, req)
-		return
-	case http.MethodGet:
-		s.handleGetLogin(w, req)
-		return
-	}
-	http.Error(w, "Unsupported HTTP method.", http.StatusBadRequest)
-}
-
-func (s *SSO) handleGetLogin(w http.ResponseWriter, req *http.Request) {
-	t, err := template.ParseFiles(loginTemplate)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Failed to parse html template. %v", err), http.StatusInternalServerError)
-		return
-	}
-	t.Funcs(templateFuncs).Execute(w, s.c.Meta)
 }
 
 func (s *SSO) isAccessAllowed(method, path string, policies []string) ([]string, bool) {
@@ -139,42 +118,6 @@ func (s *SSO) newCookieFromSecret(secret *Secret) (*http.Cookie, error) {
 	return cookie, nil
 }
 
-func (s *SSO) handlePostLogin(w http.ResponseWriter, req *http.Request) {
-	secret, err := Auth(s.c.VaultConfig, req)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Failed to login. %v", err), http.StatusBadRequest)
-		return
-	}
-	s.log.WithField("rid", secret.RequestID).Debugf("Authorized: %v", secret.Auth.Metadata)
-	cookie, err := s.newCookieFromSecret(secret)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	http.SetCookie(w, cookie)
-	http.Redirect(w, req, "/", http.StatusFound)
-}
-
-func (s *SSO) handleLogout(w http.ResponseWriter, req *http.Request) {
-	s.setLogoutCookie(w)
-	t, err := template.ParseFiles(logoutTemplate)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Failed to parse html template. %v", err), http.StatusInternalServerError)
-		return
-	}
-	t.Funcs(templateFuncs).Execute(w, s.c.Meta)
-}
-
-func (s *SSO) setLogoutCookie(w http.ResponseWriter) {
-	http.SetCookie(w, &http.Cookie{
-		Name:    s.c.CookieName,
-		Value:   "",
-		Path:    "/",
-		Domain:  s.c.publicURL.Hostname(),
-		Expires: time.Date(1970, time.January, 1, 1, 0, 0, 0, time.UTC),
-	})
-}
-
 func (s *SSO) showForbiddenError(w http.ResponseWriter, r *http.Request, meta map[string]interface{}) {
 	contentType := strings.ToLower(r.Header.Get("Content-Type"))
 	switch contentType {
@@ -195,37 +138,6 @@ func (s *SSO) showForbiddenError(w http.ResponseWriter, r *http.Request, meta ma
 		}
 		t.Funcs(templateFuncs).Execute(w, meta)
 	}
-}
-
-func (s *SSO) handleRequest(w http.ResponseWriter, r *http.Request) {
-	state, b, err := s.stateFromRequest(r)
-	if err != nil && err != http.ErrNoCookie {
-		s.setLogoutCookie(w)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	if state == nil {
-		http.Redirect(w, r, loginRoute, http.StatusFound)
-		return
-	}
-	requiredPolicies, ok := s.isAccessAllowed(r.Method, r.URL.Path, state.Policies)
-	if !ok {
-		data := s.c.Meta
-		data["request"] = map[string]string{
-			"method":   r.Method,
-			"path":     r.URL.Path,
-			"policies": strings.Join(requiredPolicies, ", "),
-		}
-		s.log.Errorf("Failed to access %v", data["request"])
-		s.showForbiddenError(w, r, data)
-		return
-	}
-	r.Header.Add(s.c.HeaderName, string(b))
-	r.URL.Scheme = s.c.upstreamURL.Scheme
-	r.URL.Host = s.c.upstreamURL.Host
-	r.Host = s.c.upstreamURL.Host
-	r.Header.Set("X-Forwarded-Host", r.Header.Get("Host"))
-	s.proxy.ServeHTTP(w, r)
 }
 
 func (s *SSO) stateFromRequest(req *http.Request) (*State, []byte, error) {
