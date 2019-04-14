@@ -14,12 +14,12 @@ cookieEncryptionKey: Xoo6eiquai3oow2uBaejai8itah8eeMa
 cookieName: w2e9
 headerName: SSO
 publicURL: http://127.0.0.1:8080
-upstreamURL: https://ya.ru
+upstreamURL: http://127.0.0.1:9093
 accessList:
-  - path: /ee/README.html
-    policy: admins-full
-  - path: /omnibus
-    policy: omnibus-admins
-  - path: /runner
-    policy: runner-admins
+  - path: /api/v2/silence
+    methods:
+      - POST
+      - DELETE
+    policies:
+      - admins-full
 ```
