@@ -186,6 +186,7 @@ func (s *SSO) handleRequest(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		data := s.c.Meta
+		data["method"] = r.Method
 		data["page"] = r.URL.Path
 		data["policies"] = strings.Join(requiredPolicies, ", ")
 		t.Funcs(templateFuncs).Execute(w, s.c.Meta)

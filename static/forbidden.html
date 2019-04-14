@@ -18,7 +18,7 @@
       <div class="container">
         <div class="mt-5 alert alert-danger" role="alert">
           <h4 class="alert-heading">Access forbidden</h4>
-          <p>You do not have permission to access <kbd>{{.page}}</kbd></p>
+          <p>You do not have permission to access <kbd>{{.method}} {{.page}}</kbd></p>
           {{if .policies}}
           <hr>
           <p class="mb-0">To access this page you must have one of this policies: <b>{{.policies}}</b>.</p>

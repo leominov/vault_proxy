@@ -16,7 +16,7 @@ headerName: SSO
 publicURL: http://127.0.0.1:8080
 upstreamURL: http://127.0.0.1:9093
 accessList:
-  - path: /api/v2/silence
+  - path: /api/v[1-2]/silences
     methods:
       - POST
       - DELETE
