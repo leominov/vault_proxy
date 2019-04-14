@@ -3,10 +3,18 @@ package sso
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/hashicorp/vault/api"
 )
+
+type VaultConfig struct {
+	Addr       string `yaml:"addr"`
+	AuthMethod string `yaml:"authMethod"`
+	TTLRaw     string `yaml:"ttl"`
+	ttl        time.Duration
+}
 
 type Secret struct {
 	*api.Secret
@@ -38,4 +46,19 @@ func Auth(c *VaultConfig, r *http.Request) (*Secret, error) {
 		ttl = c.ttl
 	}
 	return &Secret{secret, ttl}, nil
+}
+
+func (v *VaultConfig) Parse() error {
+	if v.TTLRaw != "token" {
+		d, err := time.ParseDuration(v.TTLRaw)
+		if err != nil {
+			return fmt.Errorf("Unable to parse TTL. %v", err)
+		}
+		v.ttl = d
+	}
+	_, err := url.Parse(v.Addr)
+	if err != nil {
+		return fmt.Errorf("Unable to parse Vault address. %v", err)
+	}
+	return nil
 }

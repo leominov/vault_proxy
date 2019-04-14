@@ -2,7 +2,6 @@ package sso
 
 import (
 	"net/http"
-	"strings"
 )
 
 func (s *SSO) ProxyRequest(w http.ResponseWriter, r *http.Request) {
@@ -20,10 +19,10 @@ func (s *SSO) ProxyRequest(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		data := map[string]interface{}{
 			"meta": s.c.Meta,
-			"request": map[string]string{
+			"request": map[string]interface{}{
 				"method":   r.Method,
 				"path":     r.URL.Path,
-				"policies": strings.Join(requiredPolicies, ", "),
+				"policies": requiredPolicies,
 			},
 		}
 		s.log.Errorf("Failed to access %v", data["request"])

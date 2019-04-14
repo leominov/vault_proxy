@@ -22,7 +22,16 @@
           <p>You do not have permission to access <kbd>{{.request.method}} {{.request.path}}</kbd></p>
           {{if .request.policies}}
           <hr>
-          <p class="mb-0">To access this page you must have one of this policies: <b>{{.request.policies}}</b>.</p>
+            {{ if eq (len .request.policies) 1 }}
+            <p class="mb-0">To access this page you must have <b>{{ index .request.policies 0 }}</b> policy.</p>
+            {{else}}
+              <p class="mb-0">To access this page you must have one of this policies:</p>
+              <ul class="mb-0">
+                {{range .request.policies}}
+                <li>{{.}}</li>
+                {{end}}
+              </ul>
+            {{end}}
           {{end}}
         </div>
       </div>

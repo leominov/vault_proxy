@@ -7,7 +7,6 @@ import (
 	"net/url"
 	"regexp"
 	"strings"
-	"time"
 
 	"gopkg.in/yaml.v2"
 )
@@ -35,13 +34,6 @@ type AccesItem struct {
 	re        *regexp.Regexp
 }
 
-type VaultConfig struct {
-	Addr       string `yaml:"addr"`
-	AuthMethod string `yaml:"authMethod"`
-	TTLRaw     string `yaml:"ttl"`
-	ttl        time.Duration
-}
-
 func LoadConfig(filename string) (*Config, error) {
 	out, err := ioutil.ReadFile(filename)
 	if err != nil {
@@ -55,13 +47,13 @@ func LoadConfig(filename string) (*Config, error) {
 	if c.VaultConfig == nil {
 		return nil, errors.New("Vault configuration must be specified")
 	}
-	if err := c.parse(); err != nil {
+	if err := c.Parse(); err != nil {
 		return nil, err
 	}
 	return c, nil
 }
 
-func (c *Config) parse() error {
+func (c *Config) Parse() error {
 	publicURL, err := url.Parse(c.PublicURLRaw)
 	if err != nil {
 		return fmt.Errorf("Unable to parse PublicURL. %v", err)
@@ -88,23 +80,8 @@ func (c *Config) parse() error {
 		}
 		item.re = re
 	}
-	if err := c.VaultConfig.parse(); err != nil {
+	if err := c.VaultConfig.Parse(); err != nil {
 		return err
-	}
-	return nil
-}
-
-func (v *VaultConfig) parse() error {
-	if v.TTLRaw != "token" {
-		d, err := time.ParseDuration(v.TTLRaw)
-		if err != nil {
-			return fmt.Errorf("Unable to parse TTL. %v", err)
-		}
-		v.ttl = d
-	}
-	_, err := url.Parse(v.Addr)
-	if err != nil {
-		return fmt.Errorf("Unable to parse Vault address. %v", err)
 	}
 	return nil
 }
