@@ -6,10 +6,19 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"html/template"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"time"
+)
+
+var (
+	templateFuncs = template.FuncMap{
+		"html": func(value interface{}) template.HTML {
+			return template.HTML(fmt.Sprint(value))
+		},
+	}
 )
 
 type SSO struct {
@@ -56,6 +65,27 @@ func (s *SSO) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *SSO) handleLogin(w http.ResponseWriter, req *http.Request) {
+	switch req.Method {
+	case http.MethodPost:
+		s.handlePostLogin(w, req)
+		return
+	case http.MethodGet:
+		s.handleGetLogin(w, req)
+		return
+	}
+	http.Error(w, "Unsupported HTTP method.", http.StatusBadRequest)
+}
+
+func (s *SSO) handleGetLogin(w http.ResponseWriter, req *http.Request) {
+	t, err := template.ParseFiles("static/login.html")
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to parse html template. %v", err), http.StatusInternalServerError)
+		return
+	}
+	t.Funcs(templateFuncs).Execute(w, s.c.Meta)
+}
+
+func (s *SSO) handlePostLogin(w http.ResponseWriter, req *http.Request) {
 	err := req.ParseForm()
 	if err != nil {
 		http.Error(w, "Failed to parse form.", http.StatusBadRequest)
@@ -67,14 +97,14 @@ func (s *SSO) handleLogin(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "Login and password must be specified.", http.StatusBadRequest)
 		return
 	}
-	secret, err := Auth(s.c.VaultAddr, s.c.VaultAuthMethod, login, pass)
+	secret, err := Auth(s.c.VaultConfig, login, pass)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to login. %v", err), http.StatusBadRequest)
 		return
 	}
 	var allowed bool
 	for _, policy := range secret.Auth.Policies {
-		if policy == s.c.VaultPolicyName {
+		if policy == s.c.VaultConfig.PolicyName {
 			allowed = true
 		}
 	}
@@ -109,7 +139,12 @@ func (s *SSO) handleLogin(w http.ResponseWriter, req *http.Request) {
 
 func (s *SSO) handleLogout(w http.ResponseWriter, req *http.Request) {
 	s.setLogoutCookie(w)
-	w.Write([]byte("Logged out"))
+	t, err := template.ParseFiles("static/logout.html")
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to parse html template. %v", err), http.StatusInternalServerError)
+		return
+	}
+	t.Funcs(templateFuncs).Execute(w, s.c.Meta)
 }
 
 func (s *SSO) setLogoutCookie(w http.ResponseWriter) {
@@ -143,7 +178,7 @@ func (s *SSO) handleRequest(w http.ResponseWriter, r *http.Request) {
 		s.proxy.ServeHTTP(w, r)
 		return
 	}
-	http.Redirect(w, r, "/sso/login.html", http.StatusFound)
+	http.Redirect(w, r, "/sso/login", http.StatusFound)
 }
 
 func (s *SSO) stateFromRequest(req *http.Request) (*State, error) {

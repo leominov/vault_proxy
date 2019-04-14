@@ -8,14 +8,13 @@ import (
 )
 
 type Config struct {
-	VaultAddr           string `yaml:"vaultAddr"`
-	VaultAuthMethod     string `yaml:"vaultAuthMethod"`
-	VaultPolicyName     string `yaml:"vaultPolicyName"`
-	CookieEncryptionKey string `yaml:"cookieEncryptionKey"`
-	CookieName          string `yaml:"cookieName"`
-	HeaderName          string `yaml:"headerName"`
-	PublicURL           string `yaml:"publicURL"`
-	UpstreamURL         string `yaml:"upstreamURL"`
+	VaultConfig         *VaultConfig      `yaml:"vaultConfig"`
+	CookieEncryptionKey string            `yaml:"cookieEncryptionKey"`
+	CookieName          string            `yaml:"cookieName"`
+	HeaderName          string            `yaml:"headerName"`
+	PublicURL           string            `yaml:"publicURL"`
+	UpstreamURL         string            `yaml:"upstreamURL"`
+	Meta                map[string]string `yaml:"meta"`
 }
 
 func LoadConfig(filename string) (*Config, error) {
