@@ -12,6 +12,8 @@ vault-auth-proxy 127.0.0.1:8080 -> Secured HTTP service 127.0.0.1:9090
 
 ## Configuration
 
+Here is example of protection [Alertmanager](https://prometheus.io/docs/alerting/alertmanager/) from anonymous deleting or creating silences:
+
 ```yaml
 ---
 meta:
@@ -19,19 +21,20 @@ meta:
 vaultConfig:
   addr: https://vault.local
   authMethod: ldap
-  ttl: token # 720h
+  ttl: token # based on token lifetime
 cookieEncryptionKey: Xoo6eiquai3oow2uBaejai8itah8eeMa
 cookieName: sso
 headerName: SSO
-publicURL: http://127.0.0.1:8080
+publicURL: http://alertmanager.local
 upstreamURL: http://127.0.0.1:9093
 accessList:
-  - path: /api/v[1-2]/silences
+  - path: /api/v[1-2]/silence
     methods:
       - POST
       - DELETE
     policies:
-      - admins-full
+      - admins
+      - developers
   - path: /
     policies:
       - default
