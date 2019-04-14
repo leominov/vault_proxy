@@ -1,6 +1,6 @@
 # vault-auth-proxy
 
-A reverse proxy and static file server that provides authentication using HashiCorp Vault to validate access by userpass or ldap.
+A reverse proxy and static file server that provides authentication using [HashiCorp Vault](https://www.vaultproject.io) to validate access by userpass or ldap.
 
 ## Architecture
 
