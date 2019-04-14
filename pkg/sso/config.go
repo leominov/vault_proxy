@@ -45,9 +45,6 @@ func LoadConfig(filename string) (*Config, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Unable to parse configuration file. %v", err)
 	}
-	if c.VaultConfig == nil {
-		return nil, errors.New("Vault configuration must be specified")
-	}
 	if err := c.Parse(); err != nil {
 		return nil, err
 	}
@@ -88,6 +85,9 @@ func (c *Config) Parse() error {
 		if err != nil {
 			return err
 		}
+	}
+	if c.VaultConfig == nil {
+		return errors.New("Vault configuration must be specified")
 	}
 	if err := c.VaultConfig.Parse(); err != nil {
 		return err
