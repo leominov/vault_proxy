@@ -1,5 +1,15 @@
 # vault-auth-proxy
 
+A reverse proxy and static file server that provides authentication using HashiCorp Vault to validate access by userpass or ldap.
+
+## Architecture
+
+```
+Nginx :443 (ssl termination)    -> vault-auth-proxy 127.0.0.1:8080
+vault-auth-proxy 127.0.0.1:8080 -> HashiCorp Vault :443
+vault-auth-proxy 127.0.0.1:8080 -> Secured HTTP service 127.0.0.1:9090
+```
+
 ## Configuration
 
 ```yaml

@@ -21,8 +21,8 @@ const (
 	logoutTemplate    = "static/logout.html"
 	forbiddenTemplate = "static/forbidden.html"
 
-	loginRoute  = "/_/login"
-	logoutRoute = "/_/logout"
+	loginRoute  = "/-/login"
+	logoutRoute = "/-/logout"
 )
 
 var (
