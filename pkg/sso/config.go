@@ -54,6 +54,23 @@ func LoadConfig(filename string) (*Config, error) {
 	return c, nil
 }
 
+func (a *AccesItem) Parse() error {
+	a.policyMap = make(map[string]bool, len(a.Policies))
+	for _, policy := range a.Policies {
+		a.policyMap[policy] = true
+	}
+	a.methodMap = make(map[string]bool, len(a.Methods))
+	for _, method := range a.Methods {
+		a.methodMap[strings.ToUpper(method)] = true
+	}
+	re, err := regexp.Compile(a.Path)
+	if err != nil {
+		return fmt.Errorf("Unable to parse '%s' as regular expression. %v", a.Path, err)
+	}
+	a.re = re
+	return nil
+}
+
 func (c *Config) Parse() error {
 	publicURL, err := url.Parse(c.PublicURLRaw)
 	if err != nil {
@@ -67,19 +84,10 @@ func (c *Config) Parse() error {
 	c.upstreamURL = upstreamURL
 	c.routeRegExpMap = make(map[string]*regexp.Regexp, len(c.AccessList))
 	for _, item := range c.AccessList {
-		item.policyMap = make(map[string]bool, len(item.Policies))
-		for _, policy := range item.Policies {
-			item.policyMap[policy] = true
-		}
-		item.methodMap = make(map[string]bool, len(item.Methods))
-		for _, method := range item.Methods {
-			item.methodMap[strings.ToUpper(method)] = true
-		}
-		re, err := regexp.Compile(item.Path)
+		err := item.Parse()
 		if err != nil {
-			return fmt.Errorf("Unable to parse '%s' as regular expression. %v", item.Path, err)
+			return err
 		}
-		item.re = re
 	}
 	if err := c.VaultConfig.Parse(); err != nil {
 		return err
