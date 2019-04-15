@@ -56,6 +56,9 @@ rules:
 * Check `TTL` form a user's state
 * Multiple endpoints
 * [Token](https://www.vaultproject.io/docs/auth/token.html) auth method
+* [AppRole](https://www.vaultproject.io/docs/auth/approle.html) auth method
+* Login form with all of supported auth methods
+* [Basic authentication](https://en.wikipedia.org/wiki/Basic_access_authentication) based on [Token](https://www.vaultproject.io/docs/auth/token.html) auth method
 
 ## Links
 
