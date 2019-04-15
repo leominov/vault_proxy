@@ -17,7 +17,12 @@ Here is example of protection [Alertmanager](https://prometheus.io/docs/alerting
 ```yaml
 ---
 meta:
-  title: Portal
+  title: Alertmanager
+  description: |
+    <ul class="mb-0">
+      <li><a href="https://prometheus.io/docs/alerting/alertmanager/">Documentation</a></li>
+      <li><a href="https://github.com/prometheus/alertmanager">GitHub</a></li>
+    </ul>
 vaultConfig:
   addr: https://vault.local
   authMethod: ldap
@@ -31,6 +36,8 @@ headerName: SSO
 publicURL: http://alertmanager.local
 upstreamURL: http://127.0.0.1:9093
 accessList:
+  # v1: https://github.com/prometheus/alertmanager/blob/master/api/v1/api.go#L132
+  # v2: https://github.com/prometheus/alertmanager/blob/master/api/v2/openapi.yaml
   - path: /api/v[1-2]/silence
     methods:
       - POST
@@ -38,7 +45,4 @@ accessList:
     policies:
       - admins
       - developers
-  - path: /
-    policies:
-      - default
 ```
