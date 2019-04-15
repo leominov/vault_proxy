@@ -39,7 +39,7 @@ func (s *Server) processFormLogin(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, fmt.Sprintf("Failed to login. %v", err), http.StatusBadRequest)
 		return
 	}
-	s.log.Debugf("Authorized: %v", secret.Auth.Metadata)
+	s.log.WithField("vault_request_id", secret.RequestID).Debugf("Authorized: %v", secret.Auth.Metadata)
 	cookie, err := s.newCookieFromSecret(secret)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
