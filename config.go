@@ -19,13 +19,13 @@ type Config struct {
 	PublicURLRaw        string                 `yaml:"publicURL"`
 	UpstreamURLRaw      string                 `yaml:"upstreamURL"`
 	Meta                map[string]interface{} `yaml:"meta"`
-	AccessList          []*AccesItem           `yaml:"accessList"`
+	Rules               []*Rule                `yaml:"rules"`
 	routeRegExpMap      map[string]*regexp.Regexp
 	publicURL           *url.URL
 	upstreamURL         *url.URL
 }
 
-type AccesItem struct {
+type Rule struct {
 	Name      string   `yaml:"name"`
 	Path      string   `yaml:"path"`
 	Policies  []string `yaml:"policies"`
@@ -51,20 +51,20 @@ func LoadConfig(filename string) (*Config, error) {
 	return c, nil
 }
 
-func (a *AccesItem) Parse() error {
-	a.policyMap = make(map[string]bool, len(a.Policies))
-	for _, policy := range a.Policies {
-		a.policyMap[policy] = true
+func (r *Rule) Parse() error {
+	r.policyMap = make(map[string]bool, len(r.Policies))
+	for _, policy := range r.Policies {
+		r.policyMap[policy] = true
 	}
-	a.methodMap = make(map[string]bool, len(a.Methods))
-	for _, method := range a.Methods {
-		a.methodMap[strings.ToUpper(method)] = true
+	r.methodMap = make(map[string]bool, len(r.Methods))
+	for _, method := range r.Methods {
+		r.methodMap[strings.ToUpper(method)] = true
 	}
-	re, err := regexp.Compile(a.Path)
+	re, err := regexp.Compile(r.Path)
 	if err != nil {
-		return fmt.Errorf("Unable to parse '%s' as regular expression. %v", a.Path, err)
+		return fmt.Errorf("Unable to parse '%s' as regular expression. %v", r.Path, err)
 	}
-	a.re = re
+	r.re = re
 	return nil
 }
 
@@ -79,9 +79,9 @@ func (c *Config) Parse() error {
 		return fmt.Errorf("Unable to parse UpstreamURL. %v", err)
 	}
 	c.upstreamURL = upstreamURL
-	c.routeRegExpMap = make(map[string]*regexp.Regexp, len(c.AccessList))
-	for _, item := range c.AccessList {
-		err := item.Parse()
+	c.routeRegExpMap = make(map[string]*regexp.Regexp, len(c.Rules))
+	for _, rule := range c.Rules {
+		err := rule.Parse()
 		if err != nil {
 			return err
 		}

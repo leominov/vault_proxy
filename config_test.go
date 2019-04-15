@@ -4,8 +4,8 @@ import (
 	"testing"
 )
 
-func TestParse_AccesItem(t *testing.T) {
-	a := &AccesItem{
+func TestParse_Rule(t *testing.T) {
+	a := &Rule{
 		Policies: []string{"admin"},
 		Methods:  []string{"post", "get"},
 		Path:     "/route",
@@ -14,7 +14,7 @@ func TestParse_AccesItem(t *testing.T) {
 	if err != nil {
 		t.Errorf("Must be nil, but got %v", err)
 	}
-	b := &AccesItem{
+	b := &Rule{
 		Policies: []string{"admin"},
 		Methods:  []string{"post", "get"},
 		Path:     "`[[/route",
@@ -38,8 +38,8 @@ func TestParse_Config(t *testing.T) {
 		},
 		PublicURLRaw:   "https://google.com",
 		UpstreamURLRaw: "https://google.com",
-		AccessList: []*AccesItem{
-			&AccesItem{
+		Rules: []*Rule{
+			&Rule{
 				Policies: []string{"admin"},
 				Methods:  []string{"post", "get"},
 				Path:     "/route",
@@ -57,8 +57,8 @@ func TestParse_Config(t *testing.T) {
 		},
 		PublicURLRaw:   "https`://google.com",
 		UpstreamURLRaw: "https://google.com",
-		AccessList: []*AccesItem{
-			&AccesItem{
+		Rules: []*Rule{
+			&Rule{
 				Policies: []string{"admin"},
 				Methods:  []string{"post", "get"},
 				Path:     "/route",
@@ -76,8 +76,8 @@ func TestParse_Config(t *testing.T) {
 		},
 		PublicURLRaw:   "https://google.com",
 		UpstreamURLRaw: "https`://google.com",
-		AccessList: []*AccesItem{
-			&AccesItem{
+		Rules: []*Rule{
+			&Rule{
 				Policies: []string{"admin"},
 				Methods:  []string{"post", "get"},
 				Path:     "/route",
@@ -95,8 +95,8 @@ func TestParse_Config(t *testing.T) {
 		},
 		PublicURLRaw:   "https://google.com",
 		UpstreamURLRaw: "https://google.com",
-		AccessList: []*AccesItem{
-			&AccesItem{
+		Rules: []*Rule{
+			&Rule{
 				Policies: []string{"admin"},
 				Methods:  []string{"post", "get"},
 				Path:     "`[[/route",
@@ -111,8 +111,8 @@ func TestParse_Config(t *testing.T) {
 		VaultConfig:    nil,
 		PublicURLRaw:   "https://google.com",
 		UpstreamURLRaw: "https://google.com",
-		AccessList: []*AccesItem{
-			&AccesItem{
+		Rules: []*Rule{
+			&Rule{
 				Policies: []string{"admin"},
 				Methods:  []string{"post", "get"},
 				Path:     "/route",
@@ -130,8 +130,8 @@ func TestParse_Config(t *testing.T) {
 		},
 		PublicURLRaw:   "https://google.com",
 		UpstreamURLRaw: "https://google.com",
-		AccessList: []*AccesItem{
-			&AccesItem{
+		Rules: []*Rule{
+			&Rule{
 				Policies: []string{"admin"},
 				Methods:  []string{"post", "get"},
 				Path:     "/route",

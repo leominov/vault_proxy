@@ -66,27 +66,27 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	mux.ServeHTTP(w, r)
 }
 
-func (s *Server) isAccessAllowed(method, path string, policies []string) (*AccesItem, bool) {
-	if len(s.c.AccessList) == 0 {
+func (s *Server) isAccessAllowed(method, path string, policies []string) (*Rule, bool) {
+	if len(s.c.Rules) == 0 {
 		return nil, true
 	}
-	for _, item := range s.c.AccessList {
-		if !item.re.MatchString(path) {
+	for _, rule := range s.c.Rules {
+		if !rule.re.MatchString(path) {
 			continue
 		}
-		if len(item.methodMap) > 0 {
-			_, ok := item.methodMap[method]
+		if len(rule.methodMap) > 0 {
+			_, ok := rule.methodMap[method]
 			if !ok {
 				continue
 			}
 		}
 		for _, p := range policies {
-			_, ok := item.policyMap[p]
+			_, ok := rule.policyMap[p]
 			if ok {
 				return nil, true
 			}
 		}
-		return item, false
+		return rule, false
 	}
 
 	return nil, true

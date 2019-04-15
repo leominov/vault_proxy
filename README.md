@@ -39,7 +39,7 @@ cookieName: sso
 headerName: SSO
 publicURL: http://alertmanager.local
 upstreamURL: http://127.0.0.1:9093
-accessList:
+rules:
   # v1: https://github.com/prometheus/alertmanager/blob/master/api/v1/api.go#L132
   # v2: https://github.com/prometheus/alertmanager/blob/master/api/v2/openapi.yaml
   - path: /api/v[1-2]/silence
