@@ -6,19 +6,19 @@ import (
 	"net/http"
 )
 
-func (s *SSO) LoginRequest(w http.ResponseWriter, req *http.Request) {
-	switch req.Method {
+func (s *SSO) LoginRequest(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
 	case http.MethodPost:
-		s.processFormLogin(w, req)
+		s.processFormLogin(w, r)
 		return
 	case http.MethodGet:
-		s.showFormLogin(w, req)
+		s.showFormLogin(w, r)
 		return
 	}
 	http.Error(w, "Unsupported HTTP method.", http.StatusBadRequest)
 }
 
-func (s *SSO) showFormLogin(w http.ResponseWriter, req *http.Request) {
+func (s *SSO) showFormLogin(w http.ResponseWriter, r *http.Request) {
 	t, err := template.ParseFiles(loginTemplate)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to parse html template. %v", err), http.StatusInternalServerError)
@@ -33,8 +33,8 @@ func (s *SSO) showFormLogin(w http.ResponseWriter, req *http.Request) {
 	t.Funcs(templateFuncs).Execute(w, data)
 }
 
-func (s *SSO) processFormLogin(w http.ResponseWriter, req *http.Request) {
-	secret, err := Auth(s.c.VaultConfig, req)
+func (s *SSO) processFormLogin(w http.ResponseWriter, r *http.Request) {
+	secret, err := Auth(r, s.c.VaultConfig)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to login. %v", err), http.StatusBadRequest)
 		return
@@ -46,5 +46,5 @@ func (s *SSO) processFormLogin(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	http.SetCookie(w, cookie)
-	http.Redirect(w, req, "/", http.StatusFound)
+	http.Redirect(w, r, "/", http.StatusFound)
 }

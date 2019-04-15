@@ -13,7 +13,7 @@ type Secret struct {
 	TTL time.Duration
 }
 
-func Auth(c *VaultConfig, r *http.Request) (*Secret, error) {
+func Auth(r *http.Request, c *VaultConfig) (*Secret, error) {
 	login, password, err := parseFormRequest(r)
 	if err != nil {
 		return nil, err

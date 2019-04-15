@@ -5,7 +5,7 @@ import (
 )
 
 func (s *SSO) ProxyRequest(w http.ResponseWriter, r *http.Request) {
-	state, b, err := s.stateFromRequest(r)
+	state, b, err := StateFromRequest(r, s.c.CookieName, s.c.CookieEncryptionKey)
 	if err != nil && err != http.ErrNoCookie {
 		s.setLogoutCookie(w)
 		http.Error(w, err.Error(), http.StatusInternalServerError)

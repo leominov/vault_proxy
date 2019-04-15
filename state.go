@@ -14,8 +14,8 @@ type State struct {
 	Policies []string  `json:"policies"`
 }
 
-func (s *SSO) stateFromRequest(req *http.Request) (*State, []byte, error) {
-	cookie, err := req.Cookie(s.c.CookieName)
+func StateFromRequest(r *http.Request, cookieName, cookieEncKey string) (*State, []byte, error) {
+	cookie, err := r.Cookie(cookieName)
 	if err == http.ErrNoCookie {
 		return nil, nil, http.ErrNoCookie
 	}
@@ -35,7 +35,7 @@ func (s *SSO) stateFromRequest(req *http.Request) (*State, []byte, error) {
 	if len(encryptedCookie) == 0 {
 		return nil, nil, errors.New("Encrypted Cookie missing")
 	}
-	b, err := decrypt(encryptedCookie, nonce, []byte(s.c.CookieEncryptionKey))
+	b, err := decrypt(encryptedCookie, nonce, []byte(cookieEncKey))
 	if err != nil {
 		return nil, nil, err
 	}

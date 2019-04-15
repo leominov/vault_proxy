@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func (s *SSO) LogoutRequest(w http.ResponseWriter, req *http.Request) {
+func (s *SSO) LogoutRequest(w http.ResponseWriter, r *http.Request) {
 	s.setLogoutCookie(w)
 	t, err := template.ParseFiles(logoutTemplate)
 	if err != nil {
