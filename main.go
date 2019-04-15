@@ -4,7 +4,6 @@ import (
 	"flag"
 	"net/http"
 
-	"github.com/leominov/vault_proxy/pkg/sso"
 	"github.com/sirupsen/logrus"
 )
 
@@ -26,12 +25,12 @@ func main() {
 	logger.SetLevel(level)
 	logger.Info("Starting vault_proxy...")
 
-	c, err := sso.LoadConfig(*configFile)
+	c, err := LoadConfig(*configFile)
 	if err != nil {
 		logger.Fatal(err)
 	}
 
-	sso, err := sso.New(c, logger)
+	sso, err := New(c, logger)
 	if err != nil {
 		logger.Fatal(err)
 	}
