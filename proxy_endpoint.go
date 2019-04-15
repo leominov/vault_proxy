@@ -8,6 +8,7 @@ func (s *SSO) ProxyRequest(w http.ResponseWriter, r *http.Request) {
 	state, b, err := StateFromRequest(r, s.c.CookieName, s.c.CookieEncryptionKey)
 	if err != nil && err != http.ErrNoCookie {
 		s.setLogoutCookie(w)
+		s.log.Errorf("Unable to get state from request: %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
