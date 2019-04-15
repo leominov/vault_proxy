@@ -1,4 +1,4 @@
-# vault-auth-proxy
+# vault_proxy
 
 A simple reverse proxy that provides authentication using [HashiCorp Vault](https://www.vaultproject.io) to validate access by [Userpass](https://www.vaultproject.io/docs/auth/userpass.html) or [LDAP](https://www.vaultproject.io/docs/auth/ldap.html) methods. Proxy doesn't read and store any data taken from Vault by user's token unless list of policies.
 
