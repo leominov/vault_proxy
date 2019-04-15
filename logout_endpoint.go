@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func (s *SSO) LogoutRequest(w http.ResponseWriter, r *http.Request) {
+func (s *Server) LogoutRequest(w http.ResponseWriter, r *http.Request) {
 	s.setLogoutCookie(w)
 	t, err := template.ParseFiles(logoutTemplate)
 	if err != nil {
@@ -23,7 +23,7 @@ func (s *SSO) LogoutRequest(w http.ResponseWriter, r *http.Request) {
 	t.Funcs(templateFuncs).Execute(w, data)
 }
 
-func (s *SSO) setLogoutCookie(w http.ResponseWriter) {
+func (s *Server) setLogoutCookie(w http.ResponseWriter) {
 	http.SetCookie(w, &http.Cookie{
 		Name:    s.c.CookieName,
 		Value:   "",

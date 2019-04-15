@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-func (s *SSO) LoginRequest(w http.ResponseWriter, r *http.Request) {
+func (s *Server) LoginRequest(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodPost:
 		s.processFormLogin(w, r)
@@ -18,7 +18,7 @@ func (s *SSO) LoginRequest(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "Unsupported HTTP method.", http.StatusBadRequest)
 }
 
-func (s *SSO) showFormLogin(w http.ResponseWriter, r *http.Request) {
+func (s *Server) showFormLogin(w http.ResponseWriter, r *http.Request) {
 	t, err := template.ParseFiles(loginTemplate)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to parse html template. %v", err), http.StatusInternalServerError)
@@ -33,7 +33,7 @@ func (s *SSO) showFormLogin(w http.ResponseWriter, r *http.Request) {
 	t.Funcs(templateFuncs).Execute(w, data)
 }
 
-func (s *SSO) processFormLogin(w http.ResponseWriter, r *http.Request) {
+func (s *Server) processFormLogin(w http.ResponseWriter, r *http.Request) {
 	secret, err := Auth(r, s.c.VaultConfig)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to login. %v", err), http.StatusBadRequest)

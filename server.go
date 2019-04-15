@@ -34,18 +34,18 @@ var (
 	}
 )
 
-type SSO struct {
+type Server struct {
 	c     *Config
 	log   *logrus.Logger
 	proxy *httputil.ReverseProxy
 }
 
-func New(c *Config, l *logrus.Logger) (*SSO, error) {
+func New(c *Config, l *logrus.Logger) (*Server, error) {
 	proxy := httputil.NewSingleHostReverseProxy(c.upstreamURL)
 	entry := logrus.NewEntry(l)
 	proxy.ErrorLog = log.New(entry.WriterLevel(logrus.ErrorLevel), "", 0)
 	proxy.Transport = http.DefaultTransport
-	s := &SSO{
+	s := &Server{
 		c:     c,
 		log:   l,
 		proxy: proxy,
@@ -53,7 +53,7 @@ func New(c *Config, l *logrus.Logger) (*SSO, error) {
 	return s, nil
 }
 
-func (s *SSO) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	mux := http.NewServeMux()
 	fs := http.FileServer(http.Dir("static"))
 
@@ -66,7 +66,7 @@ func (s *SSO) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	mux.ServeHTTP(w, r)
 }
 
-func (s *SSO) isAccessAllowed(method, path string, policies []string) (*AccesItem, bool) {
+func (s *Server) isAccessAllowed(method, path string, policies []string) (*AccesItem, bool) {
 	if len(s.c.AccessList) == 0 {
 		return nil, true
 	}
@@ -92,7 +92,7 @@ func (s *SSO) isAccessAllowed(method, path string, policies []string) (*AccesIte
 	return nil, true
 }
 
-func (s *SSO) newCookieFromSecret(secret *Secret) (*http.Cookie, error) {
+func (s *Server) newCookieFromSecret(secret *Secret) (*http.Cookie, error) {
 	userState := &State{
 		Policies: secret.Auth.Policies,
 		TTL:      time.Now().Add(secret.TTL),
@@ -117,7 +117,7 @@ func (s *SSO) newCookieFromSecret(secret *Secret) (*http.Cookie, error) {
 	return cookie, nil
 }
 
-func (s *SSO) showForbiddenError(w http.ResponseWriter, r *http.Request, meta map[string]interface{}) {
+func (s *Server) showForbiddenError(w http.ResponseWriter, r *http.Request, meta map[string]interface{}) {
 	contentType := strings.ToLower(r.Header.Get("Content-Type"))
 	switch contentType {
 	case "application/json":

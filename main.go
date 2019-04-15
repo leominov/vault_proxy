@@ -30,16 +30,16 @@ func main() {
 		logger.Fatal(err)
 	}
 
-	sso, err := New(c, logger)
+	server, err := New(c, logger)
 	if err != nil {
 		logger.Fatal(err)
 	}
 
-	server := &http.Server{
+	httpServer := &http.Server{
 		Addr:    *listenAddress,
-		Handler: sso,
+		Handler: server,
 	}
 
-	logger.Infof("Listening address: %s", server.Addr)
-	logger.Fatal(server.ListenAndServe())
+	logger.Infof("Listening address: %s", httpServer.Addr)
+	logger.Fatal(httpServer.ListenAndServe())
 }
