@@ -50,11 +50,14 @@
         border-top-left-radius: 0;
         border-top-right-radius: 0;
       }
+      .footer {
+        background-color: #f5f5f5;
+      }
     </style>
   </head>
-  <body class="text-center">
+  <body>
     <form class="form-login" method="POST" action="{{.vars.login}}">
-      <h1 class="h3 mb-3 font-weight-normal">Please login to {{.meta.title}}</h1>
+      <h1 class="h3 mb-3 font-weight-normal">Please login{{if .meta.title}} to {{.meta.title}}{{end}}</h1>
       {{if .meta.description}}
       <div class="alert alert-info text-left">
         {{.meta.description | html}}
