@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -37,11 +36,6 @@ type SSO struct {
 	c     *Config
 	log   *logrus.Logger
 	proxy *httputil.ReverseProxy
-}
-
-type State struct {
-	TTL      time.Time `json:"ttl"`
-	Policies []string  `json:"policies"`
 }
 
 func New(c *Config, l *logrus.Logger) (*SSO, error) {
@@ -141,37 +135,4 @@ func (s *SSO) showForbiddenError(w http.ResponseWriter, r *http.Request, meta ma
 		}
 		t.Funcs(templateFuncs).Execute(w, meta)
 	}
-}
-
-func (s *SSO) stateFromRequest(req *http.Request) (*State, []byte, error) {
-	cookie, err := req.Cookie(s.c.CookieName)
-	if err == http.ErrNoCookie {
-		return nil, nil, http.ErrNoCookie
-	}
-	if err != nil {
-		return nil, nil, err
-	}
-	decodedCookie, err := base64.StdEncoding.DecodeString(cookie.Value)
-	if err != nil {
-		return nil, nil, err
-	}
-	encryptedCookie := []byte(decodedCookie)
-	nonce := encryptedCookie[:12]
-	encryptedCookie = encryptedCookie[12:]
-	if len(nonce) != 12 {
-		return nil, nil, errors.New("Nonce must be 12 characters in length")
-	}
-	if len(encryptedCookie) == 0 {
-		return nil, nil, errors.New("Encrypted Cookie missing")
-	}
-	b, err := decrypt(encryptedCookie, nonce, []byte(s.c.CookieEncryptionKey))
-	if err != nil {
-		return nil, nil, err
-	}
-	var state *State
-	err = json.NewDecoder(bytes.NewReader(b)).Decode(&state)
-	if err != nil {
-		return nil, nil, err
-	}
-	return state, b, nil
 }
