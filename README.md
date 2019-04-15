@@ -51,6 +51,12 @@ accessList:
       - developers
 ```
 
+## TODO
+
+* Check `TTL` form a user's state
+* Multiple endpoints
+* [Token](https://www.vaultproject.io/docs/auth/token.html) auth method
+
 ## Links
 
 * [Regex Tester](https://regex-golang.appspot.com/assets/html/index.html)

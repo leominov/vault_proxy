@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 )
 
@@ -20,8 +21,9 @@ const (
 	logoutTemplate    = "static/logout.html"
 	forbiddenTemplate = "static/forbidden.html"
 
-	loginRoute  = "/-/login"
-	logoutRoute = "/-/logout"
+	loginRoute    = "/-/login"
+	logoutRoute   = "/-/logout"
+	metricsProute = "/-/metrics"
 )
 
 var (
@@ -57,6 +59,7 @@ func (s *SSO) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	mux.HandleFunc(loginRoute, s.LoginRequest)
 	mux.HandleFunc(logoutRoute, s.LogoutRequest)
+	mux.Handle(metricsProute, promhttp.Handler())
 	mux.Handle("/_/", http.StripPrefix("/_/", fs))
 	mux.HandleFunc("/", s.ProxyRequest)
 
