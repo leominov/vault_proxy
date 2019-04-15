@@ -12,11 +12,11 @@ vault-auth-proxy 127.0.0.1:8080 -> Secured HTTP service 127.0.0.1:9090
 
 ## Configuration
 
+Here is example of protection [Alertmanager](https://prometheus.io/docs/alerting/alertmanager/) from deleting or creating silences by everyone. In same time all authorized users can view silences cause `GET` requests allowed for all.
+
 <p align="center">
   <img src="http://shot.weburg.ru/leo/t6ere-l0uzp.png">
 </p>
-
-Here is example of protection [Alertmanager](https://prometheus.io/docs/alerting/alertmanager/) from deleting or creating silences by everyone. In same time all authorized users can view silences cause `GET` requests allowed for all.
 
 ```yaml
 ---
