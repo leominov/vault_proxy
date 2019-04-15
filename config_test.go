@@ -32,8 +32,9 @@ func TestParse_Config(t *testing.T) {
 	)
 	c = &Config{
 		VaultConfig: &VaultConfig{
-			Addr:   "https://google.com",
-			TTLRaw: "token",
+			Addr:       "https://google.com",
+			TTLRaw:     "token",
+			AuthMethod: "ldap",
 		},
 		PublicURLRaw:   "https://google.com",
 		UpstreamURLRaw: "https://google.com",

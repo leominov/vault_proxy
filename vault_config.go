@@ -22,6 +22,9 @@ func (v *VaultConfig) Parse() error {
 		}
 		v.ttl = d
 	}
+	if v.AuthMethod != "userpass" && v.AuthMethod != "ldap" {
+		return fmt.Errorf("Unknown Vault auth method: %s", v.AuthMethod)
+	}
 	_, err := url.Parse(v.Addr)
 	if err != nil {
 		return fmt.Errorf("Unable to parse Vault address. %v", err)
