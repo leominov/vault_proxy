@@ -30,7 +30,9 @@ func (s *Server) showFormLogin(w http.ResponseWriter, r *http.Request) {
 			"login": loginRoute,
 		},
 	}
-	t.Funcs(templateFuncs).Execute(w, data)
+	if err := t.Funcs(templateFuncs).Execute(w, data); err != nil {
+		http.Error(w, fmt.Sprintf("Failed to render tamplate: %v", err), http.StatusInternalServerError)
+	}
 }
 
 func (s *Server) processFormLogin(w http.ResponseWriter, r *http.Request) {

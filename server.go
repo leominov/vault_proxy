@@ -118,6 +118,7 @@ func (s *Server) newCookieFromSecret(secret *Secret) (*http.Cookie, error) {
 }
 
 func (s *Server) showForbiddenError(w http.ResponseWriter, r *http.Request, meta map[string]interface{}) {
+	var terr error
 	contentType := strings.ToLower(r.Header.Get("Content-Type"))
 	switch contentType {
 	case "application/json":
@@ -128,7 +129,7 @@ func (s *Server) showForbiddenError(w http.ResponseWriter, r *http.Request, meta
 			"error_code": http.StatusForbidden,
 		}
 		w.WriteHeader(http.StatusForbidden)
-		encoder.Encode(message)
+		terr = encoder.Encode(message)
 	default:
 		t, err := template.ParseFiles(forbiddenTemplate)
 		if err != nil {
@@ -136,6 +137,10 @@ func (s *Server) showForbiddenError(w http.ResponseWriter, r *http.Request, meta
 			http.Error(w, fmt.Sprintf("Failed to parse html template. %v", err), http.StatusInternalServerError)
 			return
 		}
-		t.Funcs(templateFuncs).Execute(w, meta)
+		terr = t.Funcs(templateFuncs).Execute(w, meta)
+	}
+	if terr != nil {
+		s.log.Errorf("Failed to render tamplate: %v", terr)
+		http.Error(w, fmt.Sprintf("Failed to render tamplate: %v", terr), http.StatusInternalServerError)
 	}
 }
