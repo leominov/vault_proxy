@@ -38,12 +38,12 @@ type Rule struct {
 func LoadConfig(filename string) (*Config, error) {
 	out, err := ioutil.ReadFile(filename)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to load configuration file. %v", err)
+		return nil, fmt.Errorf("unable to load configuration file. %v", err)
 	}
 	c := &Config{}
 	err = yaml.Unmarshal(out, &c)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to parse configuration file. %v", err)
+		return nil, fmt.Errorf("unable to parse configuration file. %v", err)
 	}
 	if err := c.Parse(); err != nil {
 		return nil, err
@@ -62,7 +62,7 @@ func (r *Rule) Parse() error {
 	}
 	re, err := regexp.Compile(r.Path)
 	if err != nil {
-		return fmt.Errorf("Unable to parse '%s' as regular expression. %v", r.Path, err)
+		return fmt.Errorf("unable to parse '%s' as regular expression. %v", r.Path, err)
 	}
 	r.re = re
 	return nil
@@ -71,12 +71,12 @@ func (r *Rule) Parse() error {
 func (c *Config) Parse() error {
 	publicURL, err := url.Parse(c.PublicURLRaw)
 	if err != nil {
-		return fmt.Errorf("Unable to parse PublicURL. %v", err)
+		return fmt.Errorf("unable to parse PublicURL. %v", err)
 	}
 	c.publicURL = publicURL
 	upstreamURL, err := url.Parse(c.UpstreamURLRaw)
 	if err != nil {
-		return fmt.Errorf("Unable to parse UpstreamURL. %v", err)
+		return fmt.Errorf("unable to parse UpstreamURL. %v", err)
 	}
 	c.upstreamURL = upstreamURL
 	c.routeRegExpMap = make(map[string]*regexp.Regexp, len(c.Rules))
@@ -87,10 +87,7 @@ func (c *Config) Parse() error {
 		}
 	}
 	if c.VaultConfig == nil {
-		return errors.New("Vault configuration must be specified")
+		return errors.New("configuration for Vault must be specified")
 	}
-	if err := c.VaultConfig.Parse(); err != nil {
-		return err
-	}
-	return nil
+	return c.VaultConfig.Parse()
 }

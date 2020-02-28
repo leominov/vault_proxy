@@ -18,16 +18,16 @@ func (v *VaultConfig) Parse() error {
 	if v.TTLRaw != "token" {
 		d, err := time.ParseDuration(v.TTLRaw)
 		if err != nil {
-			return fmt.Errorf("Unable to parse TTL. %v", err)
+			return fmt.Errorf("unable to parse TTL. %v", err)
 		}
 		v.ttl = d
 	}
 	if v.AuthMethod != "userpass" && v.AuthMethod != "ldap" {
-		return fmt.Errorf("Unknown Vault auth method: %s", v.AuthMethod)
+		return fmt.Errorf("unknown Vault auth method: %s", v.AuthMethod)
 	}
 	_, err := url.Parse(v.Addr)
 	if err != nil {
-		return fmt.Errorf("Unable to parse Vault address. %v", err)
+		return fmt.Errorf("unable to parse Vault address. %v", err)
 	}
 	return nil
 }

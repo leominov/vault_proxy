@@ -21,9 +21,9 @@ const (
 	logoutTemplate    = "static/logout.html"
 	forbiddenTemplate = "static/forbidden.html"
 
-	loginRoute    = "/-/login"
-	logoutRoute   = "/-/logout"
-	metricsProute = "/-/metrics"
+	loginRoute   = "/-/login"
+	logoutRoute  = "/-/logout"
+	metricsRoute = "/-/metrics"
 )
 
 var (
@@ -59,7 +59,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	mux.HandleFunc(loginRoute, s.LoginRequest)
 	mux.HandleFunc(logoutRoute, s.LogoutRequest)
-	mux.Handle(metricsProute, promhttp.Handler())
+	mux.Handle(metricsRoute, promhttp.Handler())
 	mux.Handle("/_/", http.StripPrefix("/_/", fs))
 	mux.HandleFunc("/", s.ProxyRequest)
 
@@ -99,11 +99,11 @@ func (s *Server) newCookieFromSecret(secret *Secret) (*http.Cookie, error) {
 	}
 	b, err := json.Marshal(userState)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to marshal user state. %v", err)
+		return nil, fmt.Errorf("failed to marshal user state. %v", err)
 	}
 	encryptedCookie, nonce, err := encrypt(b, []byte(s.c.CookieEncryptionKey))
 	if err != nil {
-		return nil, errors.New("Failed to encrypt user state")
+		return nil, errors.New("failed to encrypt user state")
 	}
 	encryptedCookie = append(nonce, encryptedCookie...)
 	encodedCookie := base64.StdEncoding.EncodeToString(encryptedCookie)
@@ -140,7 +140,7 @@ func (s *Server) showForbiddenError(w http.ResponseWriter, r *http.Request, meta
 		terr = t.Funcs(templateFuncs).Execute(w, meta)
 	}
 	if terr != nil {
-		s.log.Errorf("Failed to render tamplate: %v", terr)
+		s.log.Errorf("Failed to render template: %v", terr)
 		http.Error(w, fmt.Sprintf("Failed to render tamplate: %v", terr), http.StatusInternalServerError)
 	}
 }

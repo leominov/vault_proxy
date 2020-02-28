@@ -26,23 +26,18 @@ func StateFromRequest(r *http.Request, cookieName, cookieEncKey string) (*State,
 	if err != nil {
 		return nil, nil, err
 	}
-	encryptedCookie := []byte(decodedCookie)
-	nonce := encryptedCookie[:12]
-	encryptedCookie = encryptedCookie[12:]
+	nonce := decodedCookie[:12]
+	decodedCookie = decodedCookie[12:]
 	if len(nonce) != 12 {
-		return nil, nil, errors.New("Nonce must be 12 characters in length")
+		return nil, nil, errors.New("nonce must be 12 characters in length")
 	}
-	if len(encryptedCookie) == 0 {
-		return nil, nil, errors.New("Encrypted Cookie missing")
+	if len(decodedCookie) == 0 {
+		return nil, nil, errors.New("encrypted Cookie missing")
 	}
-	b, err := decrypt(encryptedCookie, nonce, []byte(cookieEncKey))
+	b, err := decrypt(decodedCookie, nonce, []byte(cookieEncKey))
 	if err != nil {
 		return nil, nil, err
 	}
 	var state *State
-	err = json.NewDecoder(bytes.NewReader(b)).Decode(&state)
-	if err != nil {
-		return nil, nil, err
-	}
-	return state, b, nil
+	return state, b, json.NewDecoder(bytes.NewReader(b)).Decode(&state)
 }
