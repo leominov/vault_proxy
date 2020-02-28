@@ -1,0 +1,25 @@
+---
+meta:
+  title: Alertmanager
+  description: |
+    <ul class="mb-0">
+      <li><a href="https://prometheus.io/docs/alerting/alertmanager/">Documentation</a></li>
+      <li><a href="https://github.com/prometheus/alertmanager">GitHub</a></li>
+    </ul>
+vaultConfig:
+  addr: https://vault.local
+  authMethod: ldap
+  ttl: token
+cookieEncryptionKey: Xoo6eiquai3oow2uBaejai8itah8eeMa
+cookieName: sso
+headerName: SSO
+publicURL: http://[fe80::%31%25en0]/
+upstreamURL: http://127.0.0.1:9093
+rules:
+  - path: /api/v[1-2]/silence
+    methods:
+      - POST
+      - DELETE
+    policies:
+      - admins
+      - developers
